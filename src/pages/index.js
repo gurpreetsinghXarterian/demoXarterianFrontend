@@ -1,114 +1,261 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useDispatch } from 'react-redux';
+import { fetchAllPosts } from "@/store/actions/postActions";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/router";
+import { CgProfile } from "react-icons/cg";
+import Toaster from "@/components/CustomComponent/Toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+// Home Component
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const dispatch = useDispatch();
+  const [allPosts, setAllPosts] = useState([]);
+  const postRefs = useRef([]);
+  const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+  const [isPlayingArray, setIsPlayingArray] = useState([]);
+  const [pausedManually, setPausedManually] = useState([]); // Track manually paused videos
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const getAllPostsfun = async () => {
+    try {
+      const response = await dispatch(fetchAllPosts());
+
+      if (fetchAllPosts.fulfilled.match(response) && response.payload.status == "success") {
+        setAllPosts(response.payload.posts);
+      } else {
+        Toaster({
+          type: "error",
+          text: response.payload.message || "An error occurred. Please try again later.",
+        });
+      }
+    } catch (error) {
+      console.error(error || "An error occurred. Please try again later.");
+      Toaster({
+        type: "error",
+        text: "An error occurred. Please try again later.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    getAllPostsfun();
+  }, []);
+
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.5,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const index = entry.target.dataset.index;
+        const isCurrentlyPlaying = isPlayingArray[index];
+        const isManuallyPaused = pausedManually[index];
+
+        // If the video is visible and not manually paused, play it
+        if (entry.isIntersecting && !isManuallyPaused && !isCurrentlyPlaying) {
+          setIsPlayingArray((prevState) => {
+            const updatedState = [...prevState];
+            updatedState[index] = true;
+
+            // Pause the previous video
+            if (playingVideoIndex !== null && playingVideoIndex !== index) {
+              updatedState[playingVideoIndex] = false;
+            }
+
+            return updatedState;
+          });
+
+          setPlayingVideoIndex(index);
+        } else if (!entry.isIntersecting && isCurrentlyPlaying) {
+          setIsPlayingArray((prevState) => {
+            const updatedState = [...prevState];
+            updatedState[index] = false;
+            return updatedState;
+          });
+        }
+      });
+    }, observerOptions);
+
+    allPosts.forEach((_, index) => {
+      const videoElement = postRefs.current[index];
+      if (videoElement) {
+        observer.observe(videoElement);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [allPosts, isPlayingArray, playingVideoIndex, pausedManually]);
+
+  const togglePlayPause = (index) => {
+    setIsPlayingArray((prevState) => {
+      const updatedState = [...prevState];
+      const currentIsPlaying = updatedState[index];
+      updatedState[index] = !currentIsPlaying;
+
+      if (playingVideoIndex !== null && playingVideoIndex !== index) {
+        updatedState[playingVideoIndex] = false;
+      }
+
+      return updatedState;
+    });
+
+    // Toggle the pausedManually flag
+    setPausedManually((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
+
+    setPlayingVideoIndex((prevIndex) => (prevIndex === index ? null : index)); // Toggle the playing video index
+  };
+
+  return (
+    <div className="flex flex-col items-center overflow-y-scroll h-screen pt-11 md:pt-0 ">
+      {allPosts.map((post, index) => (
+        <div
+          className="relative flex items-center justify-center xs:w-[450px] w-[350px] md:h-[90vh] xs:h-[80vh] h-[70vh] my-10 rounded-[8px]"
+          key={index}
+        >
+          {post.videoUrl ? (
+            <VideoCard
+              videoUrl={post.videoUrl}
+              caption={post.caption}
+              index={index}
+              post={post}
+              postRefs={postRefs}
+              isPlaying={isPlayingArray[index] || false} // Get the play state for the specific video
+              togglePlayPause={togglePlayPause} // Pass toggle function for manual control
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ) : (
+            <ImageCard post={post} index={index} />
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      ))}
+    </div>
+  );
+}
+
+// VideoCard Component
+function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, togglePlayPause }) {
+  const router = useRouter();
+  const videoRef = postRefs.current[index];
+  const [popupCaptionOpen, setPopupCaptionOpen] = useState(false)
+
+  const togglePopUp = () => {
+    setPopupCaptionOpen(!popupCaptionOpen)
+  }
+
+  useEffect(() => {
+    if (videoRef) {
+      if (isPlaying) {
+        videoRef.play(); // Play the video
+      } else {
+        videoRef.pause(); // Pause the video
+      }
+    }
+  }, [isPlaying, videoRef]);
+
+  const handleClickNavigate = (navItem) => {
+    router.push(`/${navItem}`)
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      <video
+        ref={(el) => (postRefs.current[index] = el)} // Storing video reference in postRefs
+        data-index={index} // Attach index for IntersectionObserver
+        className="object-cover w-full md:h-[90vh] xs:h-[80vh] h-[70vh] rounded-[7px] "
+        src={videoUrl}
+        loop
+      />
+      <div
+        className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 cursor-pointer rounded-[8px]"
+        onClick={() => togglePlayPause(index)} // Toggle play/pause on click
+      >
+        <div
+          className={`w-12 h-12 bg-white rounded-full flex justify-center items-center ${isPlaying ? "" : "play-triangle"}`}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {isPlaying ? (
+            <div className="w-4 h-4 bg-black rounded-sm"></div>
+          ) : (
+            <div className="w-0 h-0 border-l-8 border-t-4 border-b-4 border-solid border-transparent border-l-black"></div>
+          )}
+        </div>
+      </div>
+      <div className='absolute bottom-4 left-4 text-white w-full'>
+      <div className="p-2 flex items-center flex-nowrap gap-2 mb-1 cursor-pointer" onClick={() => { handleClickNavigate(post?.user?.email) }}>
+          {(post && post?.user?.userDetailsId?.profilePicture) &&
+            <div className="h-[30px] w-[30px] rounded-[100%]">
+              <img alt="Profile image" src={post?.user?.userDetailsId?.profilePicture} className="h-[30px] w-[30px] rounded-[100%]" />
+            </div>
+          }
+
+          {(!post || !post?.user?.userDetailsId?.profilePicture) &&
+            <div className="h-[30px] w-[30px] rounded-[100%]">
+              <CgProfile strokeWidth={0.1} className="w-full h-full" />
+            </div>
+          }
+          <p>
+            {post?.user?.userDetailsId?.fullName || post?.user?.email}
+          </p>
+        </div>
+        <div className={`transition-all duration-500 ease-in-out text-sm md:text-base font-semibold w-11/12 overflow-y-scroll scrollbar-none ${popupCaptionOpen ? "h-[300px] bg-black bg-opacity-20" : "h-[50px] bg-black bg-opacity-10"} rounded-[10px] px-3 py-2`}>
+          <div className={`relative h-full w-full cursor-pointer transition-opacity duration-300 ${popupCaptionOpen ? "opacity-100" : "opacity-50"}`} onClick={togglePopUp}>
+            {caption}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImageCard({ post, index }) {
+  const router = useRouter();
+
+  const [popupCaptionOpen, setPopupCaptionOpen] = useState(false)
+
+  const togglePopUp = () => {
+    setPopupCaptionOpen(!popupCaptionOpen)
+  }
+
+  const handleClickNavigate = (navItem) => {
+    router.push(`/${navItem}`)
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      <img
+        className="object-cover w-full md:h-[90vh] xs:h-[80vh] h-[70vh] rounded-[7px]"
+        src={post.imageUrl}
+        alt={post.caption}
+      />
+      <div className='absolute bottom-4 left-4 text-white w-full'>
+        <div className="p-2 flex items-center flex-nowrap gap-2 mb-1 cursor-pointer" onClick={() => { handleClickNavigate(post?.user?.email) }}>
+          {(post && post?.user?.userDetailsId?.profilePicture) &&
+            <div className="h-[30px] w-[30px] rounded-[100%]">
+              <img alt="Profile image" src={post?.user?.userDetailsId?.profilePicture} className="h-[30px] w-[30px] rounded-[100%]" />
+            </div>
+          }
+
+          {(!post || !post?.user?.userDetailsId?.profilePicture) &&
+            <div className="h-[30px] w-[30px] rounded-[100%]">
+              <CgProfile strokeWidth={0.1} className="w-full h-full" />
+            </div>
+          }
+          <p>
+            {post?.user?.userDetailsId?.fullName || post?.user?.email}
+          </p>
+        </div>
+        <div className={`transition-all duration-500 ease-in-out text-sm md:text-base font-semibold w-11/12 overflow-y-scroll scrollbar-none ${popupCaptionOpen ? "h-[300px] bg-black bg-opacity-20" : "h-[50px] bg-black bg-opacity-10"} rounded-[10px] px-3 py-2`}>
+          <div className={`relative h-full w-full cursor-pointer transition-opacity duration-300 ${popupCaptionOpen ? "opacity-100" : "opacity-50"}`} onClick={togglePopUp}>
+            {post.caption}
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

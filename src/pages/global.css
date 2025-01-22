@@ -1,0 +1,26 @@
+.container {
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .title {
+    color: #0070f3;
+    font-size: 24px;
+  }
+
+  @keyframes shinyBorder {
+    0% {
+      box-shadow: 0 0 10px 0px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.75);
+    }
+    100% {
+      box-shadow: 0 0 10px 0px rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  .animate-shiny-border {
+    animation: shinyBorder 1.5s infinite ease-in-out;
+  }

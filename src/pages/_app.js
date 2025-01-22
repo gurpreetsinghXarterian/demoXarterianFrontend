@@ -1,27 +1,27 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+
 import "@/styles/globals.css";
+import { Provider } from "react-redux";
+import { store } from "@/store/store";
+import Loader from "./loader";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; 
 
 export default function App({ Component, pageProps }) {
-  const router = useRouter();
-  const [showPage, setShowPage] = useState(false);
 
-  const publicRoutes = ["/login"];
 
-  useEffect(() => {
-    const user = localStorage.getItem("user");
+  return <>
+    <Provider store={store}>
+      <Loader comp={<Component {...pageProps} />}/>
+    </Provider>
+    <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        closeOnClick
+        pauseOnHover
+        draggable 
+        theme="colored"
+      />
+  </>
 
-    if (!user && !publicRoutes.includes(router.pathname)) {
-      router.push("/login");
-    }
-    setShowPage(true);
-  }, [router]);
-
-  return showPage ?
-    <Component {...pageProps} />
-    :
-    <div className="flex justify-center items-center min-h-screen">
-      <p className="text-lg">Loading...</p>
-    </div>
-    ;
 }
