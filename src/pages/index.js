@@ -1,9 +1,12 @@
 import { useDispatch } from 'react-redux';
-import { fetchAllPosts } from "@/store/actions/postActions";
+import { DeletePost, fetchAllPosts } from "@/store/actions/postActions";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import { CgProfile } from "react-icons/cg";
 import Toaster from "@/components/CustomComponent/Toaster";
+import { selectUser } from '@/store/selectors/userSelectors';
+import { useSelector } from "react-redux";
+import { saveAs } from 'file-saver';
 
 // Home Component
 export default function Home() {
@@ -140,10 +143,44 @@ export default function Home() {
 
 // VideoCard Component
 function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, togglePlayPause }) {
+  const dispatch = useDispatch();
   const router = useRouter();
   const videoRef = postRefs.current[index];
   const [popupCaptionOpen, setPopupCaptionOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const userDetails = useSelector(selectUser);
 
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const downloadFile = (fileUrl) => {
+    saveAs(fileUrl);
+  };
+
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const response = await dispatch(DeletePost(postId)); //.unwrap() // for unwrap data 
+      if (DeletePost.fulfilled.match(response) && response.payload.status == "success") {
+        Toaster({
+          type: "success",
+          text: response.payload.message || "Post deleted Successfully",
+        });
+      }
+      else {
+        Toaster({
+          type: "error",
+          text: response.payload.message || "An error occurred. Please try again later.",
+        });
+      }
+    } catch (error) {
+      Toaster({
+        type: "error",
+        text: error || "An error occurred. Please try again later.",
+      });
+    }
+  }
   const togglePopUp = () => {
     setPopupCaptionOpen(!popupCaptionOpen)
   }
@@ -163,7 +200,8 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full group" onMouseLeave={() => setIsOpen(false)} >
+      
       <video
         ref={(el) => (postRefs.current[index] = el)} // Storing video reference in postRefs
         data-index={index} // Attach index for IntersectionObserver
@@ -173,7 +211,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
       />
       <div
         className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 cursor-pointer rounded-[8px]"
-        onClick={() => togglePlayPause(index)} // Toggle play/pause on click
+        onClick={(e) =>{e.stopPropagation(); togglePlayPause(index)}} // Toggle play/pause on click
       >
         <div
           className={`w-12 h-12 bg-white rounded-full flex justify-center items-center ${isPlaying ? "" : "play-triangle"}`}
@@ -185,8 +223,9 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
           )}
         </div>
       </div>
+     
       <div className='absolute bottom-4 left-4 text-white w-full'>
-      <div className="p-2 flex items-center flex-nowrap gap-2 mb-1 cursor-pointer" onClick={() => { handleClickNavigate(post?.user?.email) }}>
+        <div className="p-2 flex items-center flex-nowrap gap-2 mb-1 cursor-pointer" onClick={() => { handleClickNavigate(post?.user?.email) }}>
           {(post && post?.user?.userDetailsId?.profilePicture) &&
             <div className="h-[30px] w-[30px] rounded-[100%]">
               <img alt="Profile image" src={post?.user?.userDetailsId?.profilePicture} className="h-[30px] w-[30px] rounded-[100%]" />
@@ -208,12 +247,57 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
           </div>
         </div>
       </div>
+      <div
+        className="absolute top-2 right-2 h-7 w-7 group-hover:flex hidden flex-col justify-center gap-1 items-center cursor-pointer rounded-[100%] bg-black bg-opacity-50"
+        onClick={(e)=>{e.stopPropagation(); toggleMenu()}}
+      >
+        <div
+          className={` w-3 border-b transition-transform duration-300 ${isOpen ? 'rotate-45 absolute' : ''
+            }`}
+        ></div>
+        <div
+          className={` w-3 border-b transition-all duration-300 ${isOpen ? 'opacity-0' : ''
+            }`}
+        ></div>
+        <div
+          className={` w-3 border-b transition-transform duration-300 ${isOpen ? '-rotate-45 absolute' : ''
+            }`}
+        ></div>
+      </div>
+
+      {isOpen && (
+        <div
+          className="absolute top-2 right-2 group-hover:flex flex-col hidden w-[120px] bg-gray-800 text-white p-4 rounded-[10px]"
+          onClick={() => setIsOpen(false)}
+        >
+          <ul className="flex flex-col gap-2">
+            <li
+              className={`bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer`}
+              onClick={() => downloadFile(videoUrl)}>
+              download
+            </li>
+            <li
+              className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
+              onClick={() => { }}>
+              share
+            </li>
+            <li
+              className={`bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer ${(userDetails.data._id == post.user._id) ? "block" : "hidden"}`}
+              onClick={() => { handleDeletePost(post._id) }}>
+              delete
+            </li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
 
 function ImageCard({ post, index }) {
+  const dispatch = useDispatch();
   const router = useRouter();
+  const userDetails = useSelector(selectUser);
+  const [isOpen, setIsOpen] = useState(false);
 
   const [popupCaptionOpen, setPopupCaptionOpen] = useState(false)
 
@@ -225,8 +309,81 @@ function ImageCard({ post, index }) {
     router.push(`/${navItem}`)
   };
 
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const downloadFile = (fileUrl) => {
+    saveAs(fileUrl);
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const response = await dispatch(DeletePost(postId)); //.unwrap() // for unwrap data 
+      if (DeletePost.fulfilled.match(response) && response.payload.status == "success") {
+        Toaster({
+          type: "success",
+          text: response.payload.message || "Post deleted Successfully",
+        });
+      }
+      else {
+        Toaster({
+          type: "error",
+          text: response.payload.message || "An error occurred. Please try again later.",
+        });
+      }
+    } catch (error) {
+      Toaster({
+        type: "error",
+        text: error || "An error occurred. Please try again later.",
+      });
+    }
+  }
+
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full group" onMouseLeave={() => setIsOpen(false)}>
+      <div
+        className="absolute top-2 right-2 h-7 w-7 group-hover:flex hidden flex-col justify-center gap-1 items-center cursor-pointer rounded-[100%] bg-black bg-opacity-50"
+        onClick={toggleMenu}
+      >
+        <div
+          className={` w-3 border-b transition-transform duration-300 ${isOpen ? 'rotate-45 absolute' : ''
+            }`}
+        ></div>
+        <div
+          className={` w-3 border-b transition-all duration-300 ${isOpen ? 'opacity-0' : ''
+            }`}
+        ></div>
+        <div
+          className={` w-3 border-b transition-transform duration-300 ${isOpen ? '-rotate-45 absolute' : ''
+            }`}
+        ></div>
+      </div>
+
+      {isOpen && (
+        <div
+          className="absolute top-2 right-2 group-hover:flex flex-col hidden w-[120px] bg-gray-800 text-white p-4 rounded-[10px]"
+          onClick={() => setIsOpen(false)}
+        >
+          <ul className="flex flex-col gap-2">
+            <li
+              className={`bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer`}
+              onClick={() => downloadFile(post.imageUrl)}>
+              download
+            </li>
+            <li
+              className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
+              onClick={() => { }}>
+              share
+            </li>
+            <li
+              className={`bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer ${(userDetails.data._id == post.user._id) ? "block" : "hidden"}`}
+              onClick={() => { handleDeletePost(post._id) }}>
+              delete
+            </li>
+          </ul>
+        </div>
+      )}
       <img
         className="object-cover w-full md:h-[90vh] xs:h-[80vh] h-[70vh] rounded-[7px]"
         src={post.imageUrl}

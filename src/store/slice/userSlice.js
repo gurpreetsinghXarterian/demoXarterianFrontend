@@ -9,7 +9,7 @@ export const fetchUser = createAsyncThunk(
     try {
       const token = await getCookie("token");
       const response = await axios.get(
-        `http://localhost:8000/user/profile`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -29,7 +29,7 @@ export const fetchAnonymousUser = createAsyncThunk(
     try {
       const token = await getCookie("token");
       const response = await axios.get(
-        `http://localhost:8000/user/anonymousprofile?email=${email}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/anonymousprofile?email=${email}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -47,7 +47,7 @@ export const forgotPassword = createAsyncThunk(
   'user/forgotPassword',
   async ({ email, newPassword }, thunkAPI) => {
     try {
-      const response = await axios.put(`http://localhost:8000/user/forgot/Password/${email}`, { newPassword })
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_BASE_URL}/user/forgot/Password/${email}`, { newPassword })
       return response.data;
 
     } catch (error) {
@@ -61,7 +61,7 @@ export const loginUser = createAsyncThunk(
   'user/loginUser',
   async (loginCredentials, thunkAPI) => {
     try {
-      const response = await axios.post("http://localhost:8000/user/loginuser", { ...loginCredentials })
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/user/loginuser`, { ...loginCredentials })
       const userToken = response.data.token;
       if (userToken) {
         setCookie("token", userToken);
@@ -80,7 +80,7 @@ export const sendOtpUserMail = createAsyncThunk(
   async (mail, thunkAPI) => {
     try {
 
-      const response = await axios.post("http://localhost:8000/otp/sendOtp", { email: mail })
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/otp/sendOtp`, { email: mail })
 
       return response.data;
 
@@ -95,7 +95,7 @@ export const VerifyOtp = createAsyncThunk(
   async (verificationData, thunkAPI) => {
     try {
 
-      const response = await axios.post("http://localhost:8000/otp/verifyOtp", { ...verificationData })
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/otp/verifyOtp`, { ...verificationData })
 
       return response.data;
 
@@ -111,7 +111,7 @@ export const registerUser = createAsyncThunk(
   async (sinupCredentials, thunkAPI) => {
     try {
 
-      const response = await axios.post("http://localhost:8000/user/signupuser", { ...sinupCredentials })
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/user/signupuser`, { ...sinupCredentials })
 
       return response.data;
 
@@ -127,7 +127,7 @@ export const upgradeUserDetails = createAsyncThunk(
   async (formdata, thunkAPI) => {
     try {
       const token = await getCookie("token");
-      const response = await axios.put("http://localhost:8000/user/Details",
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_BASE_URL}/user/Details`,
         formdata,
         {
           headers: {
@@ -151,7 +151,7 @@ export const SearchUser = createAsyncThunk(
   async (searchKeyword, thunkAPI) => {
     try {
       const token = await getCookie("token");
-      const response = await axios.get(`http://localhost:8000/user/search?keyword=${searchKeyword}`,
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/user/search?keyword=${searchKeyword}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -173,7 +173,7 @@ export const followUser = createAsyncThunk(
   async (followUserId, thunkAPI) => {
     try {
       const token = await getCookie("token");
-      const response = await axios.put(`http://localhost:8000/user/toggleFollow`,
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_BASE_URL}/user/toggleFollow`,
         {followUserId:followUserId},
         {
           headers: {

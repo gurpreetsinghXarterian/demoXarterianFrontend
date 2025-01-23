@@ -7,7 +7,7 @@ export const fetchAllPosts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/post/allPosts`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/allPosts`
       );
       return response.data;
     } catch (error) {
@@ -21,7 +21,7 @@ export const fetchAllPostsVideos = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/post/allPostsVideos`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/allPostsVideos`
       );
       return response.data;
     } catch (error) {
@@ -36,7 +36,7 @@ export const allUserPosts = createAsyncThunk(
     try {
       const token= await getCookie("token");
       const response = await axios.get(
-        `http://localhost:8000/post/allUserPosts`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/allUserPosts`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -55,7 +55,7 @@ export const allAnonymousUserPosts = createAsyncThunk(
   async (email, thunkAPI) => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/post/allAnonymousUserPosts?email=${email}`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/allAnonymousUserPosts?email=${email}`
       );
       return response.data;
     } catch (error) {
@@ -70,8 +70,30 @@ export const UploadPostData = createAsyncThunk(
     try {
       const token= await getCookie("token");
       const response = await axios.post(
-        `http://localhost:8000/post/createPost`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/createPost`,
         formdata,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      thunkAPI.dispatch(fetchAllPosts());
+      thunkAPI.dispatch(allUserPosts());
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const DeletePost = createAsyncThunk(
+  'post/DeletePost',
+  async (postId, thunkAPI) => {
+    try {
+      const token= await getCookie("token");
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/post/delete/${postId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -151,6 +173,16 @@ const userSlice = createSlice({
       .addCase(allAnonymousUserPosts.fulfilled, (state,action) => {
       })
       .addCase(allAnonymousUserPosts.rejected, (state, action) => {
+      })
+      .addCase(DeletePost.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(DeletePost.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(DeletePost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
   },
 });

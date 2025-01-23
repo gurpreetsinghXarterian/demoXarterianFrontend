@@ -47,7 +47,7 @@ const Navigation = () => {
   },[router])
 
   return (
-    <div className="w-screen h-[50px] rounded-tl-[10px] rounded-tr-[10px] md:w-[100px]  920sc:w-[400px] md:h-screen md:rounded-tr-[10px] md:rounded-br-[10px] bg-gray-200 md:bg-gray-50 shadow-md">
+    <div className="w-screen h-[50px] rounded-tl-[10px] rounded-tr-[10px] md:w-[100px]  920sc:w-[400px] md:h-screen md:rounded-tr-[10px] md:rounded-br-[10px] bg-gray-200 md:bg-gray-50 shadow-md z-50">
       <Image
         src="/assets/logo/x_arterian_logo.jpg"
         alt="Arterain Logo"
