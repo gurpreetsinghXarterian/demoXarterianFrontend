@@ -9,7 +9,6 @@ import { useSelector } from "react-redux";
 import { saveAs } from 'file-saver';
 import { FaFacebook, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 
-// Home Component
 export default function Home() {
   const dispatch = useDispatch();
   const [allPosts, setAllPosts] = useState([]);
