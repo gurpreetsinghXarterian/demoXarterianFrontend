@@ -5,15 +5,26 @@ import { selectUser } from "@/store/selectors/userSelectors";
 import { DeletePost } from "@/store/slice/postsSlice";
 import Toaster from "@/components/CustomComponent/Toaster";
 import { useDispatch } from 'react-redux';
+import { useRouter } from "next/router";
 
 export default function ProfileSectionImages({ images, setSharePopupOpen, setSharePost }) {
   const dispatch = useDispatch();
   const userDetails = useSelector(selectUser);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    if(userDetails){
+      setIsOpen(!isOpen);
+    }
+    else{
+      router.push(`/login`)
+      Toaster({
+          type: "success",
+          text: "Pls Login First to Follow",
+        });
+    }
   };
   
   const downloadFile = (fileUrl) => {

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Toaster from "@/components/CustomComponent/Toaster";
 import { DeletePost } from "@/store/slice/postsSlice";
 import { saveAs } from 'file-saver';
+import { useRouter } from "next/router";
 
 export default function ProfileSectionVideos({ videos, setSharePopupOpen, setSharePost }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -87,6 +88,7 @@ function VideoCard({ videoUrl, index, handleGridVideoDoubleClick, post, setShare
   const [isOpen, setIsOpen] = useState(false);
   const userDetails = useSelector(selectUser);
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -110,7 +112,16 @@ function VideoCard({ videoUrl, index, handleGridVideoDoubleClick, post, setShare
 
   const toggleMenu = (e) => {
     e.stopPropagation();
-    setIsOpen(!isOpen);
+    if(userDetails){
+      setIsOpen(!isOpen);
+    }
+    else{
+      router.push(`/login`)
+      Toaster({
+          type: "success",
+          text: "Pls Login First to Follow",
+        });
+    }
   };
 
   const downloadFile = (fileUrl) => {

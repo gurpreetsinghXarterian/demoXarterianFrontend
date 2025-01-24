@@ -14,11 +14,13 @@ import { fetchAnonymousUser, followUser, upgradeUserDetails } from "../../store/
 import { FaPencilAlt } from "react-icons/fa";
 import FollowPopupScreen from "../FollowPopup";
 import Toaster from "@/components/CustomComponent/Toaster";
+import { useRouter } from "next/router";
 
 let callOncehandleFetchUserPosts = true;
 
 export default function Profile({ selfProfile, userData, setSharePopupOpen, setSharePost }) {
     const dispatch = useDispatch();
+    const router = useRouter();
     let userDetails = useSelector(selectUser);
     const allUserPostsData = useSelector(selectAllUserPosts);
     const [updatedAllUserAnonymousPostsData, setUpdatedAllUserAnonymousPostsData] = useState();
@@ -124,37 +126,37 @@ export default function Profile({ selfProfile, userData, setSharePopupOpen, setS
 
     const handlefollow = async (uId, email) => {
         try {
-            if(userDetails){
-
-            const response = await dispatch(followUser(uId)); //.unwrap() // for unwrap data 
-            if (followUser.fulfilled.match(response) && response.payload.status == "success") {
-                setFollowUnfollow(!followUnfollow)
-                if (response.payload.message == "Followed successfully") {
-                    setFollowersCount((prev) => (prev + 1))
+            if (userDetails) {
+                const response = await dispatch(followUser(uId)); //.unwrap() // for unwrap data 
+                if (followUser.fulfilled.match(response) && response.payload.status == "success") {
+                    setFollowUnfollow(!followUnfollow)
+                    if (response.payload.message == "Followed successfully") {
+                        setFollowersCount((prev) => (prev + 1))
+                    }
+                    else if (response.payload.message == "Unfollowed successfully") {
+                        setFollowersCount((prev) => (prev - 1))
+                    }
                 }
-                else if (response.payload.message == "Unfollowed successfully") {
-                    setFollowersCount((prev) => (prev - 1))
+                else {
+                    Toaster({
+                        type: "error",
+                        text: response.payload.message || "An error occurred. Please try again later.",
+                    });
                 }
             }
             else {
+                router.push(`/login`)
                 Toaster({
-                    type: "error",
-                    text: response.payload.message || "An error occurred. Please try again later.",
-                  });
+                    type: "success",
+                    text: "Pls Login First to Follow",
+                });
             }
-        }
-        else{
-            Toaster({
-                type: "error",
-                text: "Pls Login First to Follow",
-              });
-        }
 
         } catch (error) {
             Toaster({
                 type: "error",
                 text: error || "An error occurred. Please try again later.",
-              });
+            });
         }
     }
 
@@ -170,13 +172,13 @@ export default function Profile({ selfProfile, userData, setSharePopupOpen, setS
                 Toaster({
                     type: "success",
                     text: "Profile Picture Updated successfully!",
-                  });
+                });
             }
             else {
                 Toaster({
                     type: "error",
                     text: response.payload.message || "An error occurred. Please try again later.",
-                  });
+                });
             }
 
         } catch (error) {
@@ -184,7 +186,7 @@ export default function Profile({ selfProfile, userData, setSharePopupOpen, setS
             Toaster({
                 type: "error",
                 text: "Something went wrong. Please try again later.",
-              });
+            });
         }
     };
 
@@ -307,8 +309,8 @@ export default function Profile({ selfProfile, userData, setSharePopupOpen, setS
                 </div>
             </div>
 
-            {section.images && <ProfileSectionImages images={updatedAllUserAnonymousPostsData?.data?.images || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost}/>}
-            {section.videos && <ProfileSectionVideos videos={updatedAllUserAnonymousPostsData?.data?.videos || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost}/>}
+            {section.images && <ProfileSectionImages images={updatedAllUserAnonymousPostsData?.data?.images || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost} />}
+            {section.videos && <ProfileSectionVideos videos={updatedAllUserAnonymousPostsData?.data?.videos || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost} />}
 
             {(profileDetails.show || profileDetails.edit) &&
                 <ProfileDetailsUpdateForm profileDetails={profileDetails} setProfileDetails={setProfileDetails} userDetails={updatedUserDetails} updateProfileDetailsPopup={updateProfileDetailsPopup} />
