@@ -18,7 +18,7 @@ export default function UserProfile() {
   const [userData, setUserData] = useState();
   const [notFoundUser, setNotFoundUser] = useState(false);
   const [sharePopupOpen, setSharePopupOpen] = useState(false);
-  const [sharePost, setSharePost] = useState({postlink:"",postcaption:""});
+  const [sharePost, setSharePost] = useState({ postlink: "", postcaption: "" });
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -32,8 +32,8 @@ export default function UserProfile() {
 
 
     if (paramsUserMail && userDetails && paramsUserMail == userDetails?.data?.email) {
-        setSelfProfile(true);
-        setNotFoundUser(false);
+      setSelfProfile(true);
+      setNotFoundUser(false);
     }
     else {
       setSelfProfile(false);
@@ -58,7 +58,7 @@ export default function UserProfile() {
   };
 
   const handleShare = (shareMedium) => {
-    let postUrl= sharePost.postlink
+    let postUrl = sharePost.postlink
     const caption = sharePost.postcaption || "Check out this awesome post!";
     postUrl = postUrl.replace(/ /g, '%20');
     console.log(postUrl);
@@ -66,7 +66,7 @@ export default function UserProfile() {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(caption)} ${encodeURIComponent(postUrl)}`;
 
-    if(postUrl!=""){
+    if (postUrl != "") {
       setSharePopupOpen(false);
       if (shareMedium === "twitter") {
         window.open(twitterUrl, '_blank');
@@ -74,15 +74,15 @@ export default function UserProfile() {
         window.open(facebookUrl, '_blank');
       } else if (shareMedium === "whatsapp") {
         window.open(whatsappUrl, '_blank');
-      } 
+      }
     }
-    else{
+    else {
       Toaster({
         type: "error",
         text: "An error occurred. Please try again later.",
       });
     }
-  
+
   };
 
   return (
@@ -100,40 +100,40 @@ export default function UserProfile() {
               <Profile selfProfile={selfProfile} userData={userData} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost} />
           )
       }
-       <div className={`absolute transition-all duration-500 ease-in-out ${sharePopupOpen?"bottom-[0%]":"-bottom-[100%]"} left-0 w-full h-full flex justify-center items-center z-50`}>
-              <div className="bg-white p-4 rounded-[10px] text-center shadow-[0_0_10px_0_rgba(0,0,0,0.5)]">
-                <h2 className="mb-4 text-xl">Where would you like to share?</h2>
-                <div className="flex justify-between gap-4">
-                  <button
-                    onClick={() => handleShare('twitter')}
-                    className="flex justify-center items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded"
-                  >
-                    <FaTwitter />
-                    Twitter
-                  </button>
-                  <button
-                    onClick={() => handleShare('facebook')}
-                    className="flex justify-center items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded"
-                  >
-                    <FaFacebook />
-                    Facebook
-                  </button>
-                  <button
-                    onClick={() => handleShare('whatsapp')}
-                    className="flex justify-center items-center gap-2 bg-green-500 text-white px-4 py-2 rounded"
-                  >
-                    <FaWhatsapp />
-                    WhatsApp
-                  </button>
-                </div>
-                <button
-                  onClick={() => setSharePopupOpen(false)} // Close the popup
-                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+      <div className={`absolute transition-all duration-500 ease-in-out ${sharePopupOpen ? "bottom-[0%]" : "-bottom-[100%]"} left-0 w-full h-full flex justify-center items-center z-50`}>
+        <div className="bg-white p-4 rounded-[10px] text-center shadow-[0_0_10px_0_rgba(0,0,0,0.5)]">
+          <h2 className="mb-4 text-xl">Where would you like to share?</h2>
+          <div className="flex justify-between gap-4">
+            <button
+              onClick={() => handleShare('twitter')}
+              className="flex justify-center items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              <FaTwitter />
+              Twitter
+            </button>
+            <button
+              onClick={() => handleShare('facebook')}
+              className="flex justify-center items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              <FaFacebook />
+              Facebook
+            </button>
+            <button
+              onClick={() => handleShare('whatsapp')}
+              className="flex justify-center items-center gap-2 bg-green-500 text-white px-4 py-2 rounded"
+            >
+              <FaWhatsapp />
+              WhatsApp
+            </button>
+          </div>
+          <button
+            onClick={() => setSharePopupOpen(false)} // Close the popup
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
