@@ -7,6 +7,7 @@ import Toaster from "@/components/CustomComponent/Toaster";
 import { selectUser } from '@/store/selectors/userSelectors';
 import { useSelector } from "react-redux";
 import { saveAs } from 'file-saver';
+import { FaFacebook, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 
 // Home Component
 export default function Home() {
@@ -16,6 +17,8 @@ export default function Home() {
   const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
   const [isPlayingArray, setIsPlayingArray] = useState([]);
   const [pausedManually, setPausedManually] = useState([]); // Track manually paused videos
+  const [sharePopupOpen, setSharePopupOpen] = useState(false);
+  const [sharePost, setSharePost] = useState({postlink:"",postcaption:""});
 
   const getAllPostsfun = async () => {
     try {
@@ -115,8 +118,36 @@ export default function Home() {
     setPlayingVideoIndex((prevIndex) => (prevIndex === index ? null : index)); // Toggle the playing video index
   };
 
+  const handleShare = (shareMedium) => {
+    let postUrl= sharePost.postlink
+    const caption = sharePost.postcaption || "Check out this awesome post!";
+    postUrl = postUrl.replace(/ /g, '%20');
+    console.log(postUrl);
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}&url=${encodeURIComponent(postUrl)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(caption)} ${encodeURIComponent(postUrl)}`;
+
+    if(postUrl!=""){
+      setSharePopupOpen(false);
+      if (shareMedium === "twitter") {
+        window.open(twitterUrl, '_blank');
+      } else if (shareMedium === "facebook") {
+        window.open(facebookUrl, '_blank');
+      } else if (shareMedium === "whatsapp") {
+        window.open(whatsappUrl, '_blank');
+      } 
+    }
+    else{
+      Toaster({
+        type: "error",
+        text: "An error occurred. Please try again later.",
+      });
+    }
+  
+  };
+
   return (
-    <div className="flex flex-col items-center overflow-y-scroll h-screen pt-11 md:pt-0 ">
+    <div className="flex flex-col items-center overflow-y-scroll h-screen pt-11 md:pt-0">
       {allPosts.map((post, index) => (
         <div
           className="relative flex items-center justify-center xs:w-[450px] w-[350px] md:h-[90vh] xs:h-[80vh] h-[70vh] my-10 rounded-[8px]"
@@ -131,18 +162,54 @@ export default function Home() {
               postRefs={postRefs}
               isPlaying={isPlayingArray[index] || false} // Get the play state for the specific video
               togglePlayPause={togglePlayPause} // Pass toggle function for manual control
+              setSharePopupOpen={setSharePopupOpen} 
+              setSharePost={setSharePost}
             />
           ) : (
-            <ImageCard post={post} index={index} />
+            <ImageCard post={post} index={index} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost}/>
           )}
         </div>
       ))}
+      <div className={`absolute transition-all duration-500 ease-in-out ${sharePopupOpen?"bottom-[0%]":"-bottom-[100%]"} left-0 w-full h-full flex justify-center items-center z-50`}>
+        <div className="bg-white p-4 rounded-[10px] text-center shadow-[0_0_10px_0_rgba(0,0,0,0.5)]">
+          <h2 className="mb-4 text-xl">Where would you like to share?</h2>
+          <div className="flex justify-between gap-4">
+            <button
+              onClick={() => handleShare('twitter')}
+              className="flex justify-center items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              <FaTwitter />
+              Twitter
+            </button>
+            <button
+              onClick={() => handleShare('facebook')}
+              className="flex justify-center items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              <FaFacebook />
+              Facebook
+            </button>
+            <button
+              onClick={() => handleShare('whatsapp')}
+              className="flex justify-center items-center gap-2 bg-green-500 text-white px-4 py-2 rounded"
+            >
+              <FaWhatsapp />
+              WhatsApp
+            </button>
+          </div>
+          <button
+            onClick={() => setSharePopupOpen(false)} // Close the popup
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 // VideoCard Component
-function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, togglePlayPause }) {
+function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, togglePlayPause, setSharePopupOpen, setSharePost }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const videoRef = postRefs.current[index];
@@ -201,7 +268,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
 
   return (
     <div className="relative w-full h-full group" onMouseLeave={() => setIsOpen(false)} >
-      
+
       <video
         ref={(el) => (postRefs.current[index] = el)} // Storing video reference in postRefs
         data-index={index} // Attach index for IntersectionObserver
@@ -211,7 +278,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
       />
       <div
         className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 cursor-pointer rounded-[8px]"
-        onClick={(e) =>{e.stopPropagation(); togglePlayPause(index)}} // Toggle play/pause on click
+        onClick={(e) => { e.stopPropagation(); togglePlayPause(index) }} // Toggle play/pause on click
       >
         <div
           className={`w-12 h-12 bg-white rounded-full flex justify-center items-center ${isPlaying ? "" : "play-triangle"}`}
@@ -223,7 +290,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
           )}
         </div>
       </div>
-     
+
       <div className='absolute bottom-4 left-4 text-white w-full'>
         <div className="p-2 flex items-center flex-nowrap gap-2 mb-1 cursor-pointer" onClick={() => { handleClickNavigate(post?.user?.email) }}>
           {(post && post?.user?.userDetailsId?.profilePicture) &&
@@ -249,7 +316,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
       </div>
       <div
         className="absolute top-2 right-2 h-7 w-7 group-hover:flex hidden flex-col justify-center gap-1 items-center cursor-pointer rounded-[100%] bg-black bg-opacity-50"
-        onClick={(e)=>{e.stopPropagation(); toggleMenu()}}
+        onClick={(e) => { e.stopPropagation(); toggleMenu() }}
       >
         <div
           className={` w-3 border-b transition-transform duration-300 ${isOpen ? 'rotate-45 absolute' : ''
@@ -278,7 +345,7 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
             </li>
             <li
               className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
-              onClick={() => { }}>
+              onClick={() => {setSharePost({postlink:videoUrl,postcaption:caption}); setSharePopupOpen(true) }}>
               share
             </li>
             <li
@@ -293,12 +360,11 @@ function VideoCard({ videoUrl, post, caption, index, postRefs, isPlaying, toggle
   );
 }
 
-function ImageCard({ post, index }) {
+function ImageCard({ post, index, setSharePopupOpen, setSharePost }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const userDetails = useSelector(selectUser);
   const [isOpen, setIsOpen] = useState(false);
-
   const [popupCaptionOpen, setPopupCaptionOpen] = useState(false)
 
   const togglePopUp = () => {
@@ -373,7 +439,7 @@ function ImageCard({ post, index }) {
             </li>
             <li
               className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
-              onClick={() => { }}>
+              onClick={() => {setSharePost({postlink:post.imageUrl,postcaption:post.caption}); setSharePopupOpen(true) }}>
               share
             </li>
             <li
@@ -384,6 +450,7 @@ function ImageCard({ post, index }) {
           </ul>
         </div>
       )}
+
       <img
         className="object-cover w-full md:h-[90vh] xs:h-[80vh] h-[70vh] rounded-[7px]"
         src={post.imageUrl}

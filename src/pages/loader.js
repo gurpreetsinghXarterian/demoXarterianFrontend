@@ -29,7 +29,7 @@ export default function Loader({ comp }) {
 
         } catch (error) {
             console.error( error.message || "An error occurred. Please try again later." );
-            Toaster({ type: "error", text: "An error occurred. Please try again later." ,   });
+            Toaster({ type: "error", text: "An error occurred. Please try again later." });
         }
     };
 

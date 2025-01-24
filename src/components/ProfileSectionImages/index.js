@@ -6,7 +6,7 @@ import { DeletePost } from "@/store/slice/postsSlice";
 import Toaster from "@/components/CustomComponent/Toaster";
 import { useDispatch } from 'react-redux';
 
-export default function ProfileSectionImages({ images }) {
+export default function ProfileSectionImages({ images, setSharePopupOpen, setSharePost }) {
   const dispatch = useDispatch();
   const userDetails = useSelector(selectUser);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -88,12 +88,12 @@ const closePopup = () => setSelectedImage(null);
                     </li>
                     <li
                       className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
-                      onClick={() => { }}>
+                      onClick={() => {setSharePost({postlink:image?.imageUrl,postcaption:image?.caption}); setSharePopupOpen(true)  }}>
                       share
                     </li>
                     <li
                       className={`bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer ${(userDetails.data._id==image.user)?"block":"hidden"}`}
-                      onClick={() => { handleDeletePost(image._id)}}>
+                      onClick={() => { handleDeletePost(image?._id)}}>
                       delete
                     </li>
                   </ul>

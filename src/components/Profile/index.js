@@ -17,7 +17,7 @@ import Toaster from "@/components/CustomComponent/Toaster";
 
 let callOncehandleFetchUserPosts = true;
 
-export default function Profile({ selfProfile, userData }) {
+export default function Profile({ selfProfile, userData, setSharePopupOpen, setSharePost }) {
     const dispatch = useDispatch();
     let userDetails = useSelector(selectUser);
     const allUserPostsData = useSelector(selectAllUserPosts);
@@ -124,6 +124,8 @@ export default function Profile({ selfProfile, userData }) {
 
     const handlefollow = async (uId, email) => {
         try {
+            if(userDetails){
+
             const response = await dispatch(followUser(uId)); //.unwrap() // for unwrap data 
             if (followUser.fulfilled.match(response) && response.payload.status == "success") {
                 setFollowUnfollow(!followUnfollow)
@@ -140,6 +142,13 @@ export default function Profile({ selfProfile, userData }) {
                     text: response.payload.message || "An error occurred. Please try again later.",
                   });
             }
+        }
+        else{
+            Toaster({
+                type: "error",
+                text: "Pls Login First to Follow",
+              });
+        }
 
         } catch (error) {
             Toaster({
@@ -298,8 +307,8 @@ export default function Profile({ selfProfile, userData }) {
                 </div>
             </div>
 
-            {section.images && <ProfileSectionImages images={updatedAllUserAnonymousPostsData?.data?.images || []} />}
-            {section.videos && <ProfileSectionVideos videos={updatedAllUserAnonymousPostsData?.data?.videos || []} />}
+            {section.images && <ProfileSectionImages images={updatedAllUserAnonymousPostsData?.data?.images || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost}/>}
+            {section.videos && <ProfileSectionVideos videos={updatedAllUserAnonymousPostsData?.data?.videos || []} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost}/>}
 
             {(profileDetails.show || profileDetails.edit) &&
                 <ProfileDetailsUpdateForm profileDetails={profileDetails} setProfileDetails={setProfileDetails} userDetails={updatedUserDetails} updateProfileDetailsPopup={updateProfileDetailsPopup} />

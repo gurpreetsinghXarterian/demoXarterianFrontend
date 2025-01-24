@@ -5,7 +5,7 @@ import Toaster from "@/components/CustomComponent/Toaster";
 import { DeletePost } from "@/store/slice/postsSlice";
 import { saveAs } from 'file-saver';
 
-export default function ProfileSectionVideos({ videos }) {
+export default function ProfileSectionVideos({ videos, setSharePopupOpen, setSharePost }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const popupVideoRef = useRef(null);
   const [isPopupPlaying, setIsPopupPlaying] = useState(false);
@@ -38,7 +38,7 @@ export default function ProfileSectionVideos({ videos }) {
         <div className="grid grid-cols-3 gap-4">
           {videos.map((video, index) => (
 
-            <VideoCard videoUrl={video.videoUrl} handleGridVideoDoubleClick={handleGridVideoDoubleClick} index={index} post={video} />
+            <VideoCard videoUrl={video.videoUrl} handleGridVideoDoubleClick={handleGridVideoDoubleClick} setSharePopupOpen={setSharePopupOpen} setSharePost={setSharePost} index={index} post={video} />
 
           ))}
         </div>
@@ -81,7 +81,7 @@ export default function ProfileSectionVideos({ videos }) {
   );
 }
 
-function VideoCard({ videoUrl, index, handleGridVideoDoubleClick, post }) {
+function VideoCard({ videoUrl, index, handleGridVideoDoubleClick, post, setSharePopupOpen, setSharePost }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -202,7 +202,7 @@ function VideoCard({ videoUrl, index, handleGridVideoDoubleClick, post }) {
               </li>
               <li
                 className="bg-white bg-opacity-10 rounded-[3px] pl-2 hover:bg-opacity-20 cursor-pointer"
-                onClick={() => { }}>
+                onClick={() => {setSharePost({postlink:videoUrl,postcaption:post?.caption}); setSharePopupOpen(true)  }}>
                 share
               </li>
               <li
