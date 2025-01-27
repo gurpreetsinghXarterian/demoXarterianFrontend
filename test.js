@@ -32,7 +32,7 @@ export default function Explore() {
   useEffect(() => {
     getAllPostsfun();
   }, []);
-  
+
   return (
     <div className="explore-container w-full h-screen p-4 overflow-y-scroll">
       <div
